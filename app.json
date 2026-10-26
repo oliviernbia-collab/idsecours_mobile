@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "ID SECOURS",
+    "slug": "id-secours",
+    "scheme": "idsecours",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "primaryColor": "#E3141B",
+    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#FFFFFF" },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ci.idsecours.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "ID SECOURS utilise votre position uniquement pour une déclaration, un document trouvé, une collecte, un SOS ou le Mode Protection.",
+        "NSCameraUsageDescription": "ID SECOURS utilise l’appareil photo pour photographier vos documents et pour la vérification par selfie.",
+        "NSMicrophoneUsageDescription": "ID SECOURS utilise le micro pour les messages vocaux et le code vocal du Mode Protection.",
+        "NSPhotoLibraryUsageDescription": "ID SECOURS accède à vos photos pour joindre un document à votre dossier."
+      }
+    },
+    "android": {
+      "package": "ci.idsecours.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "CAMERA", "RECORD_AUDIO", "VIBRATE"]
+    },
+    "web": { "favicon": "./assets/favicon.png" },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-audio",
+      ["expo-splash-screen", { "image": "./assets/splash-icon.png", "imageWidth": 160, "backgroundColor": "#FFFFFF" }],
+      ["expo-location", { "locationWhenInUsePermission": "ID SECOURS utilise votre position uniquement pour une déclaration, un document trouvé, une collecte, un SOS ou le Mode Protection." }],
+      ["expo-image-picker", { "cameraPermission": "ID SECOURS utilise l’appareil photo pour photographier vos documents et pour la vérification par selfie.", "photosPermission": "ID SECOURS accède à vos photos pour joindre un document à votre dossier." }]
+    ],
+    "extra": {
+      "apiUrl": ""
+    }
+  }
+}
