@@ -6,7 +6,7 @@ import { api, storage } from "./lib/api";
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
 const TOKEN = "ids_token";
-const NAV = ["home", "docs", "search", "profile"];
+const NAV = ["home", "docs", "search", "notifs", "profile"]; // barre de navigation à 5 onglets (§24)
 
 export function AppProvider({ children }) {
   const [user, setUser] = useState(null), [ready, setReady] = useState(false), [cat, setCat] = useState(null);

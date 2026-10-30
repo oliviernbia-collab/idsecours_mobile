@@ -193,17 +193,17 @@ export function SosProtection() {
   useEffect(() => { if (!pm || !pm.active) return; const i = setInterval(() => tick(x => x + 1), 1000); return () => clearInterval(i); }, [pm && pm.active]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!s) return <Spinner />;
   const vOk = s.voice.trained && s.voice.enabled && canUse(s, "vocal");
-  const start = async () => { const m = +custom > 0 ? Math.min(720, +custom) : dur; try { const r = await api.post("/sos/protection", { minutes: m }); app.setSos(r.sos); app.toast("Mode Protection activé"); } catch (e) { app.toast(e.message, "alert"); } };
+  const start = async () => { const m = +custom > 0 ? Math.min(720, +custom) : dur; try { const [loc, bat] = await Promise.all([locate(), battery()]); const r = await api.post("/sos/protection", { minutes: m, loc, battery: bat }); app.setSos(r.sos); app.toast("Mode Protection activé"); } catch (e) { app.toast(e.message, "alert"); } };
   const stop = async () => { const r = await api.del("/sos/protection"); app.setSos(r.sos); app.toast("Mode Protection arrêté"); };
   if (!pm.active) return <View><Hdr title="Mode Protection" /><View style={S.pad}>
     <T s="s">Pour les périodes où vous vous sentez davantage exposé : trajet nocturne, déplacement isolé, rendez-vous avec une personne inconnue, voyage, retour tardif…</T>
     <Text style={S.label}>Durée</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>{[[15, "15 minutes"], [30, "30 minutes"], [60, "1 heure"], [120, "2 heures"]].map(([m, l]) => <Pressable key={m} onPress={() => setDur(m)} style={[S.plan, { width: "47.5%", alignItems: "center", padding: 12 }, dur === m && { borderColor: C.green }]}><Text style={S.bold}>{l}</Text></Pressable>)}</View>
     <Field label="Durée personnalisée (minutes)"><Input keyboardType="number-pad" placeholder="Ex. : 45" value={custom} onChange={setCustom} /></Field>
     <Btn c="dark" ic="shield" onPress={start}>Activer Mode Protection</Btn>
-    <Note>Pendant le Mode Protection, la dernière position est conservée : même si le téléphone s’éteint, l’alerte peut être transmise avec la dernière géolocalisation.</Note>
+    <Note>Pendant le Mode Protection, votre téléphone envoie sa position à ID SECOURS chaque minute. S’il ne donne plus aucun signal pendant {Math.round(((s.protection && s.protection.silenceS) || 300) / 60)} minutes (téléphone éteint, batterie vide, réseau coupé), l’alerte est déclenchée par le serveur avec la dernière position connue, son heure et sa précision.</Note>
   </View></View>;
   return <View><Hdr title="Mode Protection" /><View style={S.pad}>
-    <Card style={{ backgroundColor: C.ink, alignItems: "center" }}><Text style={[S.label, { color: "#9FB0A7" }]}>Mode Protection actif</Text><Text style={{ fontFamily: F.d8, fontSize: 44, color: "#fff", marginVertical: 6 }}>{fmtLeft(new Date(pm.until) - Date.now())}</Text><Text style={{ fontSize: 12.5, color: "#C9D2CD" }}>Expire automatiquement à {fmtT(pm.until)}</Text></Card>
+    <Card style={{ backgroundColor: C.ink, alignItems: "center" }}><Text style={[S.label, { color: "#9FB0A7" }]}>Mode Protection actif</Text><Text style={{ fontFamily: F.d8, fontSize: 44, color: "#fff", marginVertical: 6 }}>{fmtLeft(new Date(pm.until) - Date.now())}</Text><Text style={{ fontSize: 12.5, color: "#C9D2CD" }}>Expire automatiquement à {fmtT(pm.until)}{pm.beat ? ` · dernier signal envoyé à ${fmtT(pm.beat)}` : ""}</Text></Card>
     <Card style={{ gap: 10 }}><Row><Icon n="mic" s={20} c={C.red} /><T s="h" style={[S.grow, { fontSize: 14 }]}>Code vocal</T></Row>
       {vOk ? <><T s="s">Phrase configurée : <Text style={S.bold}>« {s.voice.phrase} »</Text></T><Field label="Saisir la phrase entendue"><Input placeholder="Prononcez votre phrase…" value={said} onChange={setSaid} /></Field>
         <Btn sm ic="mic" onPress={() => norm(said) === norm(s.voice.phrase) ? triggerSOS(app, "vocal") : app.toast("Phrase non reconnue · aucun déclenchement.", "info")}>Valider la phrase</Btn></>

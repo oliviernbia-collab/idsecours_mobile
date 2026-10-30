@@ -91,33 +91,37 @@ export function AddDocForm({ p }) {
   const [, force] = useState(0);
   const set = k => v => { d[k] = v; force(x => x + 1); };
   const next = () => {
-    if (!(d.num || "").trim() || !(d.nom || "").trim() || !(d.prenoms || "").trim()) return app.toast("Numéro, nom et prénom(s) sont obligatoires.", "alert");
-    if (d.deliv && d.exp && d.exp < d.deliv) return app.toast("La date d’expiration doit suivre la date de délivrance.", "alert");
+    if ((c.num_required !== 0 && !(d.num || "").trim()) || !(d.nom || "").trim() || !(d.prenoms || "").trim()) return app.toast(c.num_required !== 0 ? "Numéro, nom et prénom(s) sont obligatoires." : "Nom et prénom(s) sont obligatoires.", "alert");
+    if (c.has_expiry !== 0 && d.deliv && d.exp && d.exp < d.deliv) return app.toast("La date d’expiration doit suivre la date de délivrance.", "alert");
     app.go("addDocPhotos", { id: p.id });
   };
   return <View><Hdr title="Informations du document" /><View style={S.pad}>
     <Row><Pill c="dark">Étape 1/3</Pill><T s="s">Informations</T></Row>
     <Field label="Type"><View style={[S.inp, S.row, { backgroundColor: C.soft }]}><Icon n={c.icon} s={15} /><T>{c.label}</T></View></Field>
-    <Field label="Numéro du document" req><Input autoCapitalize="characters" style={S.mono} placeholder={c.prefix + "00000000"} value={d.num} onChange={set("num")} /></Field>
+    {c.description ? <T s="s">{c.description}</T> : null}
+    <Field label={c.num_required !== 0 ? "Numéro du document" : "Numéro du document (facultatif)"} req={c.num_required !== 0}><Input autoCapitalize="characters" style={S.mono} placeholder={c.prefix + "00000000"} value={d.num} onChange={set("num")} /></Field>
     <Note>Le numéro est la donnée essentielle au rapprochement avec les documents retrouvés.</Note>
     <View style={S.grid2}><Field label="Nom" req style={{ flex: 1 }}><Input value={d.nom} onChange={set("nom")} /></Field><Field label="Prénom(s)" req style={{ flex: 1 }}><Input value={d.prenoms} onChange={set("prenoms")} /></Field></View>
     <Field label="Date de naissance"><DateInput value={d.dob} onChange={set("dob")} /></Field>
-    <Field label="Organisme émetteur"><Input value={d.org} onChange={set("org")} /></Field>
-    <View style={S.grid2}><Field label="Date de délivrance" style={{ flex: 1 }}><DateInput value={d.deliv} onChange={set("deliv")} /></Field><Field label="Expiration" style={{ flex: 1 }}><DateInput value={d.exp} onChange={set("exp")} /></Field></View>
+    {c.has_issuer !== 0 && <Field label="Organisme émetteur"><Input value={d.org} onChange={set("org")} /></Field>}
+    <View style={S.grid2}><Field label="Date de délivrance" style={{ flex: 1 }}><DateInput value={d.deliv} onChange={set("deliv")} /></Field>{c.has_expiry !== 0 && <Field label="Expiration" style={{ flex: 1 }}><DateInput value={d.exp} onChange={set("exp")} /></Field>}</View>
     <Btn onPress={next}>Continuer</Btn>
   </View></View>;
 }
 
 export function AddDocPhotos({ p }) {
-  const app = useApp(), d = draftOf(app);
+  const app = useApp(), d = draftOf(app), c = app.catOf(p.id);
   d.photos = d.photos || {};
   const [, force] = useState(0);
+  /* photos exigées par le paramétrage de la catégorie (§36) */
+  const missing = [c.recto_required && !d.photos.recto && "recto", c.verso_required && !d.photos.verso && "verso"].filter(Boolean);
   return <View><Hdr title="Photographie du document" /><View style={S.pad}>
     <Row><Pill c="dark">Étape 2/3</Pill><T s="s">Photos recto / verso</T></Row>
-    <View style={S.grid2}>{["recto", "verso"].map(k => <View key={k} style={{ flex: 1 }}><PhotoPick label={"PHOTO " + k.toUpperCase()} value={d.photos[k] && d.photos[k].uri} onPick={f => { d.photos[k] = f; force(x => x + 1); }} /></View>)}</View>
+    <View style={S.grid2}>{["recto", "verso"].map(k => <View key={k} style={{ flex: 1 }}><PhotoPick label={"PHOTO " + k.toUpperCase() + (c[k + "_required"] ? " *" : "")} value={d.photos[k] && d.photos[k].uri} onPick={f => { d.photos[k] = f; force(x => x + 1); }} /></View>)}</View>
     <Note c="green" ic="lock">Les images de vos documents sont privées et ne sont jamais utilisées comme publication publique de perte.</Note>
     <T s="s">Les photos doivent être lisibles. Elles sont compressées pour les connexions faibles.</T>
-    <Btn onPress={() => app.go("addDocRecap", { id: p.id })}>{d.photos.recto ? "Continuer" : "Continuer sans photo"}</Btn>
+    {missing.length > 0 && <Note c="orange" ic="camera">Pour un(e) {c.label}, la photo {missing.join(" et la photo ")} est obligatoire.</Note>}
+    <Btn disabled={missing.length > 0} onPress={() => app.go("addDocRecap", { id: p.id })}>{d.photos.recto || d.photos.verso ? "Continuer" : missing.length ? "Photo requise" : "Continuer sans photo"}</Btn>
   </View></View>;
 }
 
