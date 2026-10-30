@@ -9,6 +9,7 @@ import { S, C, F } from "../ui/theme";
 import { T, Hdr, Btn, Field, Input, Select, Note, Hero, Kv, Pill, Spinner, Timeline, PhotoPick, LocBlock, Card, Row, Ref, useLoad } from "../ui/kit";
 import { COMMUNES, SLOTS } from "../../shared/constants.js";
 import { fmtD, fmtT } from "../../shared/format.js";
+import { FeedbackBox } from "./feedback";
 
 export function Found() {
   const app = useApp();
@@ -95,6 +96,7 @@ export function Collecte({ p }) {
     {st === 5 && <Note ic="truck">Le livreur achemine le document vers l’agence ID SECOURS.</Note>}
     {st >= 6 && st < 8 && <Note ic="clock">Le document est arrivé en agence : le service Vérification & Contrôle vérifie son authenticité et recherche son propriétaire.</Note>}
     {st >= 8 && <Note c="green" ic="shieldck">DOCUMENT REÇU PAR ID SECOURS — Il est désormais conservé et recherchable{f.num ? ` par son numéro (${f.num})` : ""}. Merci pour votre geste !</Note>}
+    {st >= 6 && <FeedbackBox dossier={f.ref} />}
     <Btn c="ghost" ic="msg" onPress={() => app.go("chat", { id: f.ref })}>Discuter avec l’agence</Btn>
   </View></View>;
 }

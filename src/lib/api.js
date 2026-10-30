@@ -19,7 +19,20 @@ export const storage = {
   set: (k, v) => web ? localStorage.setItem(k, v) : SecureStore.setItemAsync(k, v),
   del: k => web ? localStorage.removeItem(k) : SecureStore.deleteItemAsync(k)
 };
-export const api = createApi({ baseUrl: baseUrl(), storage });
+/* envois de fichiers : le fetch d'Expo (expo/fetch) refuse les parties FormData { uri, name, type } de React Native
+   (erreur affichée « Connexion impossible ») — XMLHttpRequest les lit directement depuis le téléphone */
+function sendForm(url, { method, headers, body }) {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open(method, url);
+    Object.entries(headers).forEach(([k, v]) => x.setRequestHeader(k, v));
+    x.timeout = 120000;
+    x.onload = () => resolve({ ok: x.status >= 200 && x.status < 300, status: x.status, json: async () => JSON.parse(x.responseText) });
+    x.onerror = x.ontimeout = () => reject(new Error("network"));
+    x.send(body);
+  });
+}
+export const api = createApi({ baseUrl: baseUrl(), storage, sendForm: web ? undefined : sendForm });
 
 /* FormData : les fichiers sont des objets { uri, name, type } */
 export function form(obj) {

@@ -1,6 +1,6 @@
 /* Composants d'interface mobiles — équivalents des composants web */
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, Pressable, TextInput, ActivityIndicator, Modal, ScrollView, Image } from "react-native";
+import { View, Text, Pressable, TextInput, ActivityIndicator, Modal, ScrollView, Image, Alert, Platform } from "react-native";
 import Svg, { Rect, Path, Circle, Polyline, Text as SvgText } from "react-native-svg";
 import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
@@ -94,23 +94,31 @@ export const Switch = ({ on, onPress, disabled, label }) => <Pressable onPress={
 /* la galerie (sélecteur système) ne demande aucune permission ; seul l'appareil photo en exige une */
 export async function pickImage(camera = true, front = false, onError) {
   try {
-    if (camera && !(await ImagePicker.requestCameraPermissionsAsync()).granted) { onError && onError("Autorisez l’accès à l’appareil photo dans les réglages du téléphone."); return null; }
-    const opts = { quality: 1, allowsEditing: false, cameraType: front ? ImagePicker.CameraType.front : ImagePicker.CameraType.back, mediaTypes: ["images"] };
+    if (camera && Platform.OS !== "web" && !(await ImagePicker.requestCameraPermissionsAsync()).granted) { onError && onError("Autorisez l’accès à l’appareil photo dans les réglages du téléphone."); return null; }
+    const opts = { quality: .7, allowsEditing: false, cameraType: front ? ImagePicker.CameraType.front : ImagePicker.CameraType.back, mediaTypes: ["images"] };
     const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     if (r.canceled || !r.assets || !r.assets[0]) return null;
     const a = r.assets[0];
     /* les photos des téléphones récents dépassent la limite serveur (8 Mo) : réduites à 1600 px max puis réencodées en JPEG (gère aussi HEIC / PNG) */
-    const ctx = ImageManipulator.manipulate(a.uri);
-    if (Math.max(a.width || 0, a.height || 0) > 1600) ctx.resize(a.width >= a.height ? { width: 1600 } : { height: 1600 });
-    const out = await (await ctx.renderAsync()).saveAsync({ compress: .7, format: SaveFormat.JPEG });
-    return { uri: out.uri, name: "photo.jpg", type: "image/jpeg" };
-  } catch (e) { onError && onError("Impossible d’ouvrir " + (camera ? "l’appareil photo." : "la galerie.")); return null; }
+    try {
+      const ctx = ImageManipulator.manipulate(a.uri);
+      if (Math.max(a.width || 0, a.height || 0) > 1600) ctx.resize(a.width >= a.height ? { width: 1600 } : { height: 1600 });
+      const out = await (await ctx.renderAsync()).saveAsync({ compress: .7, format: SaveFormat.JPEG });
+      return { uri: out.uri, name: "photo.jpg", type: "image/jpeg" };
+    } catch (e) {
+      /* réencodage indisponible : envoi de l'image renvoyée par le sélecteur (déjà compressée, quality .7) */
+      const type = /png$/i.test(a.uri) ? "image/png" : "image/jpeg";
+      return { uri: a.uri, name: type === "image/png" ? "photo.png" : "photo.jpg", type };
+    }
+  } catch (e) { onError && onError("Impossible d’ouvrir " + (camera ? "l’appareil photo" : "la galerie") + " : " + (e && e.message || e)); return null; }
 }
 export function PhotoPick({ label = "PHOTO", value, onPick, front, style, round }) {
   const { openSheet, closeSheet, toast } = useApp();
-  /* attendre la fermeture de la feuille : un sélecteur lancé pendant l'animation du Modal peut ne jamais s'ouvrir */
-  const run = camera => { closeSheet(); setTimeout(async () => { const f = await pickImage(camera, front, m => toast(m, "alert")); if (f) onPick(f); }, 400); };
-  const choose = () => openSheet(<View style={{ gap: 10 }}><Btn c="dark" ic="camera" onPress={() => run(true)}>Prendre une photo</Btn><Btn c="ghost" ic="upload" onPress={() => run(false)}>Choisir dans la galerie</Btn></View>);
+  const pick = async camera => { const f = await pickImage(camera, front, m => toast(m, "alert")); if (f) onPick(f); };
+  /* téléphone : boîte de choix native — un sélecteur lancé pendant la fermeture d'un Modal (feuille) est ignoré sans erreur, surtout sur iOS */
+  const choose = () => Platform.OS === "web"
+    ? openSheet(<View style={{ gap: 10 }}><Btn c="dark" ic="camera" onPress={() => { closeSheet(); pick(true); }}>Prendre une photo</Btn><Btn c="ghost" ic="upload" onPress={() => { closeSheet(); pick(false); }}>Choisir dans la galerie</Btn></View>)
+    : Alert.alert(label === "PHOTO" ? "Photo" : label, undefined, [{ text: "Prendre une photo", onPress: () => pick(true) }, { text: "Choisir dans la galerie", onPress: () => pick(false) }, { text: "Annuler", style: "cancel" }], { cancelable: true });
   return <Pressable onPress={choose} style={[S.photo, round && { aspectRatio: 1, width: 120, borderRadius: 60, alignSelf: "center" }, style]}>
     {value ? <Image source={{ uri: value }} style={{ position: "absolute", width: "100%", height: "100%" }} /> : <View style={{ alignItems: "center", gap: 4 }}><Icon n="camera" s={22} c={C.muted} /><Text style={{ fontFamily: F.d6, fontSize: 12.5, color: C.muted, textAlign: "center" }}>{label}</Text></View>}
   </Pressable>;

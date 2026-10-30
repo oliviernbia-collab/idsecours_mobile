@@ -79,11 +79,14 @@ function DeleteAccount() {
 export function EditProfile() {
   const app = useApp(), u = app.user;
   const [f, setF] = useState({ prenom: u.prenom, nom: u.nom, email: u.email || "", dob: u.dob || "", commune: u.commune || "Cocody", avenue: u.avenue || "", rue: u.rue || "", complement: u.complement || "" });
-  const [photo, setPhoto] = useState(null);
+  const [photo, setPhoto] = useState(null), [sending, setSending] = useState(false);
   const set = k => v => setF(s => ({ ...s, [k]: v }));
-  const save = async () => { try { const r = await api.patch("/me", form({ ...f, photo })); app.setUser(r.user); app.toast("Profil mis à jour."); app.back(); } catch (e) { app.toast(e.message, "alert"); } };
+  /* la photo est enregistrée dès qu'elle est choisie (sans attendre « Enregistrer ») */
+  const sendPhoto = async p => { setPhoto(p); setSending(true); try { const r = await api.patch("/me", form({ photo: p })); app.setUser(r.user); app.toast("Photo de profil mise à jour."); } catch (e) { setPhoto(null); app.toast(e.message, "alert"); } setSending(false); };
+  const save = async () => { try { const r = await api.patch("/me", form(f)); app.setUser(r.user); app.toast("Profil mis à jour."); app.back(); } catch (e) { app.toast(e.message, "alert"); } };
   return <View><Hdr title="Mon profil" /><View style={S.pad}>
-    <PhotoPick round front label="Photo" value={photo ? photo.uri : u.photo ? api.fileUrl(u.photo) : null} onPick={setPhoto} />
+    <PhotoPick round front label="Photo" value={photo ? photo.uri : u.photo ? api.fileUrl(u.photo) : null} onPick={sendPhoto} />
+    <T s="s" style={{ textAlign: "center", marginTop: 6, marginBottom: 10 }}>{sending ? "Envoi de la photo…" : "Touchez le cercle pour changer votre photo"}</T>
     <View style={S.grid2}><Field label="Nom" style={{ flex: 1 }}><Input value={f.nom} onChange={set("nom")} /></Field><Field label="Prénom" style={{ flex: 1 }}><Input value={f.prenom} onChange={set("prenom")} /></Field></View>
     <Field label="E-mail"><Input keyboardType="email-address" autoCapitalize="none" value={f.email} onChange={set("email")} /></Field>
     <Field label="Date de naissance"><DateInput value={f.dob} onChange={set("dob")} /></Field>

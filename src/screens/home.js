@@ -10,6 +10,7 @@ import { S, C, F, PILL } from "../ui/theme";
 import { T, Hdr, Btn, Field, Select, LocBlock, Empty, Spinner, Pill, Logo, useLoad, Gap } from "../ui/kit";
 import { SLIDES, COMMUNES, DOC_ST, shortSt, isLost } from "../../shared/constants.js";
 import { fmtD, fmtDT } from "../../shared/format.js";
+import { PendingFeedback } from "./feedback";
 
 export function Avatar({ sz = 62 }) {
   const { user } = useApp();
@@ -70,6 +71,7 @@ export function Home() {
         <T s="h" style={{ fontSize: 13.5 }}>{mp ? "Abonnement" : "Aucune protection"}</T>
         {mp ? <><Pill c={mp.status.c} style={{ marginVertical: 3 }}>{mp.status.l}</Pill><T s="s">Expire le {fmtD(mp.exp)} · {prots.summary.protectedDocs} doc. protégés</T></> : <T s="s">Protégez un document dès 300 FCFA/an</T>}</View><Icon n="chevR" s={14} /></Pressable>
       {prots && prots.summary.vip && lostDoc && <Pressable onPress={() => go("vipPub", { id: lostDoc.id })} style={[S.card, S.row, { padding: 12, backgroundColor: C.ink }]}><Icon n="mega" s={22} c="#F5C842" /><View style={S.grow}><Text style={{ fontFamily: F.d6, fontSize: 13.5, color: "#fff" }}>ALERTE DE PERTE VIP</Text><Text style={[S.s, { color: "#C9D2CD" }]}>Publiez votre perte auprès de la communauté</Text></View><Icon n="chevR" s={14} c="#fff" /></Pressable>}
+      <PendingFeedback />
       <Pressable onPress={() => go(s.go)} style={[S.shadow, { borderRadius: 18, overflow: "hidden", height: 150 }]}>
         <LinearGradient colors={s.bg} start={{ x: 0, y: .3 }} end={{ x: 1, y: .7 }} style={{ flex: 1, padding: 16, justifyContent: "center", gap: 6 }}>
           <Text style={{ fontFamily: F.d7, fontSize: 17.5, lineHeight: 20, maxWidth: "62%", color: C.ink }}>{s.h}</Text><Text style={{ fontFamily: F.b4, fontSize: 12, color: C.ink2, maxWidth: "60%" }}>{s.p}</Text>

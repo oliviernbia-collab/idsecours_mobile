@@ -9,6 +9,7 @@ import { T, Hdr, Btn, Field, Input, DateInput, Select, Note, Hero, Kv, Pill, Spi
 import { locate } from "../lib/geo";
 import { COMMUNES, SLOTS } from "../../shared/constants.js";
 import { fcfa, fmtD } from "../../shared/format.js";
+import { FeedbackBox } from "./feedback";
 
 export function Search() {
   const app = useApp();
@@ -186,6 +187,7 @@ export function RecDone({ p }) {
   const c = app.catOf(r.cat);
   return <View style={S.pad}>
     <Hero ic="check" size={38} bg={C.green} title="DOCUMENT RÉCUPÉRÉ"><T s="s">{c.label} · dossier {r.ref} · {fmtD(r.doneT)}</T></Hero>
+    <FeedbackBox dossier={r.ref} />
     <Btn c="ghost" ic="receipt" onPress={async () => { try { const { proof: x } = await api.get(`/recoveries/${r.ref}/proof`); app.openSheet(<View style={{ gap: 12 }}><Text style={S.label}>Preuve de restitution</Text><Ref>{x.reference}</Ref>
       <Card><Kv rows={[["Dossier", x.dossier], ["Document", `${x.document} · ${x.numero}`], ["Agence", x.agence], ["Date", new Date(x.date).toLocaleString("fr-FR")], ["Mode", x.mode], x.agent && ["Agent", x.agent]]} /></Card>
       <Btn c="ghost" onPress={app.closeSheet}>Fermer</Btn></View>); } catch (e) { app.toast(e.message, "alert"); } }}>Ma preuve de restitution</Btn>

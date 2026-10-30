@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View, Image } from "react-native";
+import Constants from "expo-constants";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
@@ -13,11 +14,16 @@ import { NunitoSans_700Bold } from "@expo-google-fonts/nunito-sans/700Bold";
 import { AppProvider } from "./store";
 import Shell from "./Shell";
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+/* Expo Go n'affiche pas le splash d'app.json (seulement le nom de l'app) : on le libère tout de suite
+   pour montrer l'écran au logo ci-dessous. Dans un build (APK / EAS), le splash natif au logo reste jusqu'au chargement. */
+const EXPO_GO = Constants.executionEnvironment === "storeClient";
+if (!EXPO_GO) SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
   const [loaded] = useFonts({ Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold, Poppins_800ExtraBold, NunitoSans_400Regular, NunitoSans_600SemiBold, NunitoSans_700Bold });
-  useEffect(() => { if (loaded) setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 600); }, [loaded]);
-  if (!loaded) return <View style={{ flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}><Image source={require("../assets/splash-icon.png")} style={{ width: 160, height: 160 }} resizeMode="contain" /></View>;
+  const [shown, setShown] = useState(!EXPO_GO);
+  useEffect(() => { if (EXPO_GO) { SplashScreen.hideAsync().catch(() => {}); const t = setTimeout(() => setShown(true), 1500); return () => clearTimeout(t); } }, []);
+  useEffect(() => { if (loaded && !EXPO_GO) setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 600); }, [loaded]);
+  if (!loaded || !shown) return <View style={{ flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}><Image source={require("../assets/splash-icon.png")} style={{ width: 160, height: 160 }} resizeMode="contain" /></View>;
   return <SafeAreaProvider><AppProvider><Shell /></AppProvider></SafeAreaProvider>;
 }

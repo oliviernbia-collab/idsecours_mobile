@@ -103,7 +103,7 @@ export default function Shell() {
       </View>
     </Modal>
 
-    <Animated.View pointerEvents="none" style={{ position: "absolute", left: 14, right: 14, bottom: 92 + insets.bottom, opacity: toastA, transform: [{ translateY: toastA.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }], backgroundColor: C.ink, borderRadius: 14, padding: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
+    <Animated.View pointerEvents="none" style={{ position: "absolute", left: 14, right: 14, bottom: 92 + insets.bottom, opacity: toastA, transform: [{ translateY: toastA.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }], backgroundColor: app.toastS && app.toastS.kind === "ok" ? C.greenD : app.toastS && app.toastS.kind === "err" ? C.red : C.ink, borderRadius: 14, padding: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
       {app.toastS && <><Icon n={app.toastS.ic} s={16} c="#fff" /><Text style={{ color: "#fff", flex: 1, fontFamily: F.b4, fontSize: 13.5 }}>{app.toastS.msg}</Text></>}
     </Animated.View>
     {app.push && <Pressable onPress={() => { const l = app.push.link; app.setPush(null); linkTo(app, l); }} style={{ position: "absolute", left: 10, right: 10, top: insets.top + 8, backgroundColor: "rgba(255,255,255,.98)", borderRadius: 18, padding: 12, flexDirection: "row", gap: 10, alignItems: "flex-start", ...S.shadow, elevation: 10 }}>

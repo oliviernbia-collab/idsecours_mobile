@@ -1,6 +1,7 @@
 /* État global mobile : session, catalogue, pile de navigation (bouton retour Android), feuilles, toasts, notifications */
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import { BackHandler } from "react-native";
+import { BackHandler, Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import { api, storage } from "./lib/api";
 
 const Ctx = createContext(null);
@@ -15,7 +16,11 @@ export function AppProvider({ children }) {
   const [unread, setUnread] = useState(0), [sos, setSos] = useState(null), [locked, setLocked] = useState(false);
   const mem = useRef({}), lastNotif = useRef(null), toastT = useRef(), pushT = useRef();
 
-  const toast = useCallback((msg, ic = "check") => { setToast({ msg, ic }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2600); }, []);
+  const toast = useCallback((msg, ic = "check") => {
+    const kind = ic === "alert" ? "err" : ic === "check" ? "ok" : "info";
+    setToast({ msg, ic, kind }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), kind === "err" ? 4500 : 2800);
+    if (Platform.OS !== "web" && kind !== "info") Haptics.notificationAsync(kind === "err" ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Success).catch(() => {});
+  }, []);
   const showPush = useCallback((title, body, link) => { setPush({ title, body, link }); clearTimeout(pushT.current); pushT.current = setTimeout(() => setPush(null), 4500); }, []);
 
   const go = useCallback((name, p = {}) => { setSheet(null); setStack(s => [...s, { name, p }]); }, []);
